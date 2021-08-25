@@ -72,7 +72,7 @@ pub struct Blockchain {
 /// Mining
 /// Will try arbitrary amount of nonces until H(nonce || prev_hash || content) < target   
 fn mine(prev_hash: &Vec<u8>, contents: &str) {
-    let nonce: u32;
+    let contents_bytes = contents.as_bytes();
 
     // Target hash
     let mut target: Vec<u8> = vec![0; 32];
@@ -89,7 +89,7 @@ fn mine(prev_hash: &Vec<u8>, contents: &str) {
         let mut hasher = Sha256::new();
         
         hasher.update(nonce_u8);
-        hasher.update(contents.as_bytes());
+        hasher.update(contents_bytes);
         hasher.update(prev_hash);
 
         let result = &hasher.finalize()[..];
