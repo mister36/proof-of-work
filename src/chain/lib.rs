@@ -31,7 +31,7 @@ pub struct Block {
 
 impl Block {
     /// Takes in the previous block & contents of new block
-    pub fn new(prev_block_opt: Option<Block>, contents: String) -> Self {
+    pub fn new(prev_block_opt: Option<&Block>, contents: String) -> Self {
         // Sha-256 hasher
         let mut hasher = Sha256::new();
         let block;
@@ -43,9 +43,12 @@ impl Block {
         
         // Some(prev_block) => Not the genesis block
         if let Some(prev_block) = prev_block_opt {
+            // mine
+            mine(&prev_block.hash, &contents);
+
             block = Block {
                 contents,
-                prev_hash: prev_block.hash,
+                prev_hash: prev_block.hash.clone(),
                 hash,
                 timestamp: SystemTime::now()
             }
@@ -66,33 +69,42 @@ impl Block {
 pub struct Blockchain {
 
     // The blocks themselves
-    blocks: Vec<Block>
+    pub blocks: Vec<Block> // TODO: make private
 }
 
 /// Mining
-/// Will try arbitrary amount of nonces until H(nonce || prev_hash || content) < target   
+/// Will try arbitrary amount of nonces 
+/// until H(nonce || prev_hash || content) < target   
 fn mine(prev_hash: &Vec<u8>, contents: &str) {
     let contents_bytes = contents.as_bytes();
 
-    // Target hash
-    let mut target: Vec<u8> = vec![0; 32];
-    target[2] = 0x0F;
-
     for nonce in 0..u32::MAX {
-        // Concatenate nonce + prev_hash + contents
-        // Could rewrite this to be more performant (remove copying)
-        // Or keep so mining is even more difficult
-        let mut nonce_u8 = nonce.to_be_bytes().to_vec();
-        // let mut contents_u8 = contents.as_bytes().to_vec();
-        // let mut prev_hash_u8 = prev_hash.to_owned();
 
+        // Target hash [0, 0, 0, 15, ... 0]
+        let mut target: Vec<u8> = vec![0; 32];
+        target[3] = 0xFF;
+
+        // Creating nonce and hasher
+        let nonce_u8 = nonce.to_be_bytes().to_vec();
         let mut hasher = Sha256::new();
         
+        // H(nonce || prev_hash || contents)
         hasher.update(nonce_u8);
-        hasher.update(contents_bytes);
         hasher.update(prev_hash);
+        hasher.update(contents_bytes);
+        let result_array = hasher.finalize();
+        let result = &result_array[..];
+        
+        // check if result < target 
 
-        let result = &hasher.finalize()[..];
+        // println!("nonce: {}", nonce); // TODO: Remove
+        // println!("result: {:?}", result); // TODO: Remove
+        // println!("target: {:?}", target); // TODO: Remove
+        // println!("=============\n"); // TODO: Remove
+        if result.to_vec() < target {
+            println!("Nonce found: {}", nonce);
+            break;
+        }
 
     }
 }

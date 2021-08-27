@@ -1,16 +1,15 @@
+use std::io::Cursor;
 use sha2::{Sha256, Digest};
-
+use hex_literal::hex;
+use byteorder::{BigEndian, ReadBytesExt};
+use chain::{Block, Blockchain};
 fn main() {
-    let mut hasher = Sha256::new();
-    let mut hasher2 = Sha256::new();
+    let block_1 = Block::new(None, "This is a string".to_string());
+    let mut chain = Blockchain {blocks: vec![block_1]};
+    println!("Added first block to chain");
 
-    hasher.update(b"test hash");
-    hasher.update(b"test hash");
+    let block_2 = Block::new(Some(&chain.blocks[0]), "Next string".to_string());
+    println!("Created second block");
+    
 
-    hasher2.update("test hashtest hash");
-
-    let result: &[u8] = &hasher.finalize()[..];
-    let result2: &[u8] = &hasher2.finalize()[..];
-
-    println!("{:?}", result == result2);
 }

@@ -9,3 +9,12 @@ edition = "2018"
 sha2 = "0.9.5"
 lazy_static = "1.4.0"
 byteorder = "1"
+hex-literal = "0.3.3"
+
+[lib]
+name = "chain"
+path = "src/chain/lib.rs"
+
+[[bin]]
+name = "bin"
+path = "src/main.rs"
