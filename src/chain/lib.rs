@@ -32,17 +32,20 @@ pub struct Block {
 impl Block {
     /// Takes in the previous block & contents of new block
     pub fn new(prev_block_opt: Option<&Block>, contents: String) -> Self {
-        // Sha-256 hasher
+        // Sha-256 hasher and block
         let mut hasher = Sha256::new();
         let block;
+        let hash;
         
         // Hashes content and stores in vector
         hasher.update(contents.as_bytes());
-        let hash: Vec<u8> = hasher.finalize()[..].iter().cloned().collect();
-
         
-        // Some(prev_block) => Not the genesis block
+        // Not the genesis block
         if let Some(prev_block) = prev_block_opt {
+            // Hashes previous hash + content -> H(contents || prev_hash)
+            hasher.update(&prev_block.hash);
+            hash = hasher.finalize()[..].to_vec();
+
             // mine
             mine(&prev_block.hash, &contents);
 
@@ -53,6 +56,12 @@ impl Block {
                 timestamp: SystemTime::now()
             }
         } else {
+            // Concatenates 0 to content -> H(contents || 0)
+            let genesis_hash = vec![0];
+
+            hasher.update(genesis_hash);
+            hash = hasher.finalize()[..].to_vec();
+
             block = Block {
                 contents,
                 prev_hash: vec![0],
@@ -80,9 +89,9 @@ fn mine(prev_hash: &Vec<u8>, contents: &str) {
 
     for nonce in 0..u32::MAX {
 
-        // Target hash [0, 0, 0, 15, ... 0]
+        // Target hash [0, 0, 15, 0, ... 0]
         let mut target: Vec<u8> = vec![0; 32];
-        target[3] = 0xFF;
+        target[2] = 0xFF;
 
         // Creating nonce and hasher
         let nonce_u8 = nonce.to_be_bytes().to_vec();
